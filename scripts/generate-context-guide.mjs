@@ -38,18 +38,23 @@ function normalizeList(value, fallback = ["- none"]) {
 }
 
 function deriveTouchedFiles(baseRef) {
-  const diff = baseRef
-    ? run(`git diff --name-only ${baseRef}...HEAD`)
-    : run("git diff --name-only HEAD");
+  const diffAgainstBase = baseRef ? run(`git diff --name-only ${baseRef}...HEAD`) : "";
+  const diffAgainstHead = run("git diff --name-only HEAD");
+  const untracked = run("git ls-files --others --exclude-standard");
 
-  if (!diff) {
-    return ["- none"];}
-
-  return diff
+  const merged = [diffAgainstBase, diffAgainstHead, untracked]
+    .filter(Boolean)
+    .join("\n")
     .split("\n")
     .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => `- ${line}`);
+    .filter(Boolean);
+
+  const unique = Array.from(new Set(merged));
+  if (unique.length === 0) {
+    return ["- none"];
+  }
+
+  return unique.map((line) => `- ${line}`);
 }
 
 function fillTemplate(template, replacements) {
@@ -60,8 +65,9 @@ function fillTemplate(template, replacements) {
   return output;
 }
 
-function toBlock(lines) {
-  return lines.join("\n");
+function toIndentedBlock(lines, indentSize) {
+  const indent = " ".repeat(indentSize);
+  return lines.map((line) => `${indent}${line}`).join("\n");
 }
 
 function readRefreshCount(filePath) {
@@ -87,25 +93,26 @@ const cwd = process.cwd();
 
 const templatePath = path.resolve(
   cwd,
-  args.template || "docs/context-guide.template.md"
+  args.template || process.env.CONTEXT_GUIDE_TEMPLATE || "docs/context-guide.template.md"
 );
 
 const outputDir = path.resolve(
   cwd,
-  args.outputDir || "docs/context-guides"
+  args.outputDir || process.env.CONTEXT_GUIDE_OUTPUT_DIR || "docs/context-guides"
 );
 
 const timestamp = new Date().toISOString().replace(/[:]/g, "-");
-const featureId = args.feature || "unscoped";
-const taskId = args.task || "n/a";
-const branch = args.branch || run("git rev-parse --abbrev-ref HEAD") || "unknown";
+const featureId = args.feature || process.env.CONTEXT_GUIDE_FEATURE || "unscoped";
+const taskId = args.task || process.env.CONTEXT_GUIDE_TASK || "n/a";
+const branch =
+  args.branch || process.env.CONTEXT_GUIDE_BRANCH || run("git rev-parse --abbrev-ref HEAD") || "unknown";
 const outputFile =
-  args.output || path.join(outputDir, `${featureId}__${timestamp}.context.md`);
+  args.output || process.env.CONTEXT_GUIDE_OUTPUT || path.join(outputDir, `${featureId}__${timestamp}.context.md`);
 
 const refreshCount = readRefreshCount(outputFile) + 1;
 const touchedFiles = args.files
   ? normalizeList(args.files)
-  : deriveTouchedFiles(args.base || "main");
+  : deriveTouchedFiles(args.base || process.env.CONTEXT_GUIDE_BASE || "main");
 
 const replacements = {
   feature_id: featureId,
@@ -114,22 +121,25 @@ const replacements = {
   generated_at_utc: new Date().toISOString(),
   source_revision: run("git rev-parse --short HEAD") || "unknown",
   refresh_count: String(refreshCount),
-  objective: args.objective || "Define objective",
-  scope: args.scope || "Define scope boundaries",
-  touched_files: toBlock(touchedFiles),
-  architecture_boundaries: toBlock(
-    normalizeList(args.boundaries, ["- list service/module boundaries"]) 
+  objective: args.objective || process.env.CONTEXT_GUIDE_OBJECTIVE || "Define objective",
+  scope: args.scope || process.env.CONTEXT_GUIDE_SCOPE || "Define scope boundaries",
+  touched_files: toIndentedBlock(touchedFiles, 4),
+  architecture_boundaries: toIndentedBlock(
+    normalizeList(args.boundaries, ["- list service/module boundaries"]),
+    4
   ),
-  constraints: toBlock(normalizeList(args.constraints, ["- list constraints"])) ,
-  non_goals: toBlock(normalizeList(args.nonGoals, ["- list non-goals"])) ,
-  data_contracts: toBlock(
-    normalizeList(args.contracts, ["- describe interfaces and payload shapes"]) 
+  constraints: toIndentedBlock(normalizeList(args.constraints, ["- list constraints"]), 6),
+  non_goals: toIndentedBlock(normalizeList(args.nonGoals, ["- list non-goals"]), 6),
+  data_contracts: toIndentedBlock(
+    normalizeList(args.contracts, ["- describe interfaces and payload shapes"]),
+    4
   ),
-  verification_status: toBlock(
-    normalizeList(args.verification, ["- pending verification"]) 
+  verification_status: toIndentedBlock(
+    normalizeList(args.verification, ["- pending verification"]),
+    4
   ),
-  open_risks: toBlock(normalizeList(args.risks, ["- no known risks logged"])) ,
-  next_steps: toBlock(normalizeList(args.nextSteps, ["- no next steps logged"])) 
+  open_risks: toIndentedBlock(normalizeList(args.risks, ["- no known risks logged"]), 6),
+  next_steps: toIndentedBlock(normalizeList(args.nextSteps, ["- no next steps logged"]), 6)
 };
 
 const template = fs.readFileSync(templatePath, "utf8");

@@ -1,0 +1,8 @@
+{
+  "name": "ai-native-kilo-skills-context-guide-syst",
+  "private": true,
+  "scripts": {
+    "context:guide:new": "node scripts/generate-context-guide.mjs",
+    "context:guide:refresh": "node scripts/generate-context-guide.mjs --output docs/context-guides/latest.context.md"
+  }
+}

@@ -4,13 +4,13 @@ context_guide:
     feature_id: "context-guide-system"
     task_id: "5e801b82"
     branch: "convoy/ai-native-kilo-skills-context-guide-syst/12c2c01b/gt/maple/5e801b82"
-    generated_at_utc: "2026-04-13T07:52:42.328Z"
+    generated_at_utc: "2026-04-13T07:52:42.496Z"
     source_revision: "24c43fa"
-    refresh_count: 3
+    refresh_count: 2
 
   objective_and_scope:
-    objective: "Auto-generate compact context artifacts per build"
-    scope: "Scripts/templates/workflow/docs for context guide generation"
+    objective: "Bootstrap default workflow command"
+    scope: "Validate npm script wrapper for generator"
 
   touched_modules_files:
     - docs/context-guide-workflow.md
@@ -21,29 +21,22 @@ context_guide:
     - package.json
 
   architecture_boundaries:
-    - CLI script boundary
-    - No runtime app behavior changes
+    - list service/module boundaries
 
   constraints_non_goals:
     constraints:
-      - Compact sections
-      - Machine-scannable headings
-      - Low manual overhead
+      - list constraints
     non_goals:
-      - No external persistence
-      - No CI hard fail on missing guide
+      - list non-goals
 
   data_contracts_interfaces:
-    - CLI flags contract
-    - Template placeholder contract
+    - describe interfaces and payload shapes
 
   test_verification_status:
-    - Generator executes successfully
-    - Sample artifact refreshed
+    - pending verification
 
   open_risks_next_steps:
     risks:
-      - Guide quality depends on disciplined updates
+      - no known risks logged
     next_steps:
-      - Wire into CI entrypoint
-      - Add team checklist step
+      - no next steps logged

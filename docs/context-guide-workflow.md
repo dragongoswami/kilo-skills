@@ -1,31 +1,53 @@
 # Per-Build Context Guide Workflow
 
-This workflow generates a compact, standardized context guide artifact per build/feature/task.
+This system auto-generates a compact, standardized context guide artifact for each build/feature/task.
+
+## Execution Path
+
+- Template: `docs/context-guide.template.md`
+- Generator: `scripts/generate-context-guide.mjs`
+- Artifact directory: `docs/context-guides/`
+- Sample artifact: `docs/context-guides/context-guide-system__sample.context.md`
 
 ## Inputs
 
-Required for meaningful output:
-- feature identifier (`--feature`)
-- objective (`--objective`)
-- scope (`--scope`)
+Primary CLI flags:
+- `--feature` feature identifier (used in filename + metadata)
+- `--task` task/bead/change identifier
+- `--objective` build objective
+- `--scope` scope boundary for this build
+- `--base` git ref for touched-file diff (`main` default)
+- `--output` explicit artifact path for refresh-in-place
 
-Optional:
-- task id (`--task`)
-- branch (`--branch`, defaults to current git branch)
-- base ref for touched file detection (`--base`, defaults to `main`)
-- explicit touched files (`--files`, `|`-delimited)
-- boundaries (`--boundaries`, `|`-delimited)
-- constraints (`--constraints`, `|`-delimited)
-- non-goals (`--nonGoals`, `|`-delimited)
-- data contracts (`--contracts`, `|`-delimited)
-- verification status (`--verification`, `|`-delimited)
-- risks (`--risks`, `|`-delimited)
-- next steps (`--nextSteps`, `|`-delimited)
-- template path (`--template`, default `docs/context-guide.template.md`)
-- output directory (`--outputDir`, default `docs/context-guides`)
-- output file (`--output`, for refresh/update in place)
+Structured list flags (`|` delimited):
+- `--files`, `--boundaries`, `--constraints`, `--nonGoals`
+- `--contracts`, `--verification`, `--risks`, `--nextSteps`
 
-## Command
+Environment variable equivalents (for default workflow wiring):
+- `CONTEXT_GUIDE_TEMPLATE`, `CONTEXT_GUIDE_OUTPUT_DIR`, `CONTEXT_GUIDE_OUTPUT`
+- `CONTEXT_GUIDE_FEATURE`, `CONTEXT_GUIDE_TASK`, `CONTEXT_GUIDE_BRANCH`
+- `CONTEXT_GUIDE_OBJECTIVE`, `CONTEXT_GUIDE_SCOPE`, `CONTEXT_GUIDE_BASE`
+
+## Outputs
+
+Generated artifact format is compact YAML-like markdown with fixed sections:
+- objective and scope
+- touched modules/files
+- architecture boundaries
+- constraints and non-goals
+- data contracts/interfaces
+- test/verification status
+- open risks and next steps
+
+Metadata includes:
+- `schema_version`
+- feature/task identity
+- branch
+- generation timestamp
+- source git revision
+- `refresh_count`
+
+## One-Pass Generation
 
 ```bash
 node scripts/generate-context-guide.mjs \
@@ -33,29 +55,19 @@ node scripts/generate-context-guide.mjs \
   --task 5e801b82 \
   --objective "Auto-generate compact context artifacts per build" \
   --scope "Scripts/templates/workflow/docs for context guide generation" \
-  --boundaries "CLI script only|No runtime app behavior changes" \
+  --boundaries "CLI script boundary|No runtime app behavior changes" \
   --constraints "Compact format|Machine-readable sections|Low manual overhead" \
-  --nonGoals "No external storage system|No CI enforcement yet" \
-  --contracts "CLI args contract|Markdown template placeholders" \
-  --verification "Script execution succeeds|Output artifact renders" \
-  --risks "Manual inputs can drift without process discipline" \
-  --nextSteps "Integrate command in default build/checklist" \
+  --nonGoals "No external persistence|No CI hard fail on missing guide" \
+  --contracts "CLI flags contract|Template placeholder contract" \
+  --verification "Script execution succeeds|Artifact refresh succeeds" \
+  --risks "Guide quality depends on disciplined input updates" \
+  --nextSteps "Run refresh after major milestones|Publish artifact in CI" \
   --base main
 ```
 
-## Outputs
+## Refresh Mechanism
 
-- Writes one context guide artifact to `docs/context-guides/<feature>__<timestamp>.context.md`.
-- Artifact metadata includes:
-  - feature/task identity
-  - branch
-  - generation timestamp
-  - source git revision
-  - `refresh_count`
-
-## Refresh / Update Mechanism
-
-Use `--output <existing-file>` to refresh a guide in place as work evolves:
+Refresh in place to keep the same artifact current as implementation evolves:
 
 ```bash
 node scripts/generate-context-guide.mjs \
@@ -65,11 +77,11 @@ node scripts/generate-context-guide.mjs \
   --scope "Updated scope"
 ```
 
-When refreshing in place, `refresh_count` is incremented automatically.
+`refresh_count` increments automatically when reusing the same `--output` file.
 
-## Default Workflow Integration
+## Default Build Workflow Integration
 
-To make this default in a build workflow, add a wrapper command in your task runner (npm/bun/make/CI) that:
-1. Runs this script at build start.
-2. Re-runs with `--output` at key milestones (post-implementation, post-test).
-3. Stores the generated guide as a build artifact.
+Use task-runner scripts so context capture is easy and repeatable:
+1. Run `context:guide:new` at build/change start.
+2. Run `context:guide:refresh` after implementation and after verification.
+3. Store the produced `docs/context-guides/*.context.md` artifact with build outputs.

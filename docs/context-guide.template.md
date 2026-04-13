@@ -1,37 +1,37 @@
-# Context Guide
+context_guide:
+  meta:
+    schema_version: "1.0"
+    feature_id: "{feature_id}"
+    task_id: "{task_id}"
+    branch: "{branch}"
+    generated_at_utc: "{generated_at_utc}"
+    source_revision: "{source_revision}"
+    refresh_count: {refresh_count}
 
-meta:
-  feature_id: "{feature_id}"
-  task_id: "{task_id}"
-  branch: "{branch}"
-  generated_at_utc: "{generated_at_utc}"
-  source_revision: "{source_revision}"
-  refresh_count: {refresh_count}
+  objective_and_scope:
+    objective: "{objective}"
+    scope: "{scope}"
 
-## Objective And Scope
-objective: {objective}
-scope: {scope}
-
-## Touched Modules Files
+  touched_modules_files:
 {touched_files}
 
-## Architecture Boundaries
+  architecture_boundaries:
 {architecture_boundaries}
 
-## Constraints And Non Goals
-constraints:
+  constraints_non_goals:
+    constraints:
 {constraints}
-non_goals:
+    non_goals:
 {non_goals}
 
-## Data Contracts Interfaces
+  data_contracts_interfaces:
 {data_contracts}
 
-## Test Verification Status
+  test_verification_status:
 {verification_status}
 
-## Open Risks Next Steps
-risks:
+  open_risks_next_steps:
+    risks:
 {open_risks}
-next_steps:
+    next_steps:
 {next_steps}
